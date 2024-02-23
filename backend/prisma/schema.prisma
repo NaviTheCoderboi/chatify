@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id       String    @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email    String    @unique
+  username String    @unique
+  password String
+  tokens   Token[]
+  rooms    Room[]
+  messages Message[]
+}
+
+model Token {
+  id     String @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token  String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @db.Uuid
+}
+
+model Room {
+  id         String     @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  visibility Visibility @default(public)
+  allowList  String[]
+  messages   Message[]
+  owner      User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId    String     @db.Uuid
+}
+
+model Message {
+  id     String   @id @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  text   String
+  room   Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId String   @db.Uuid
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String   @db.Uuid
+  sentAt DateTime @default(now())
+}
+
+enum Visibility {
+  public
+  private
+}
